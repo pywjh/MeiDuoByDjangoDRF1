@@ -44,7 +44,8 @@ class SMSCodeView(APIView):
 
         # 执行管道
         pl.execute()
-
+        # import time
+        # time.sleep(5)
         # 7. 利用容联云通讯发送短信验证码
         # CCP().send_template_sms(self, 手机号, [验证码, 5], 1):
         CCP().send_template_sms(mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES // 60], 1)
