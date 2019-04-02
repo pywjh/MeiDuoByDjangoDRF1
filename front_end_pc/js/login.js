@@ -46,7 +46,7 @@ var vm = new Vue({
                         password: this.password
                     }, {
                         responseType: 'json',
-                        withCredentials: true
+                        withCredentials: true  // 跨域情况可以携带cookie
                     })
                     .then(response => {
                         // 使用浏览器本地存储保存token
