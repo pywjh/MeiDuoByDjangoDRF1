@@ -8,6 +8,7 @@ from rest_framework import status
 
 from meiduo_mall.libs.yuntongxun.sms import CCP
 from . import constants
+from celery_tasks.sms.tasks import send_sms_code
 
 logger = logging.getLogger('django')
 
@@ -49,6 +50,9 @@ class SMSCodeView(APIView):
         # 7. 利用容联云通讯发送短信验证码
         # CCP().send_template_sms(self, 手机号, [验证码, 5], 1):
         # CCP().send_template_sms(mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES // 60], 1)
+        # 触发异步任务,将异步任务添加到celery任务队列
+        # send_sms_code(mobile, sms_code)  # 调用普通函数而已
+        send_sms_code.delay(mobile, sms_code)  # 触发异步任务
 
         # 8. 响应
         return Response({'message': 'ok'})
