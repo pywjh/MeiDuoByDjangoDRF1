@@ -4,7 +4,12 @@ from QQLoginTool.QQtool import OAuthQQ
 from rest_framework.response import Response
 from django.conf import settings
 from rest_framework import status
+from rest_framework_jwt.settings import api_settings
 
+from .models import OAuthQQUser
+import logging
+
+logger = logging.getLogger('django')
 # Create your views here.
 class QQOauthURLView(APIView):
     """拼接好QQ登录网址"""
@@ -21,7 +26,8 @@ class QQOauthURLView(APIView):
 
         # 2.利用QQ登录SDK
         # oauth = OAuthQQ(client_id=appid, client_secret=appkey, redirect_uri=回调域名, state=记录来源)
-        oauth = OAuthQQ(client_id=settings.QQ_CLIENT_ID, client_secret=settings.QQ_CLIENT_SECRET, redirect_uri=settings.QQ_REDIRECT_URI,
+        oauth = OAuthQQ(client_id=settings.QQ_CLIENT_ID, client_secret=settings.QQ_CLIENT_SECRET,
+                        redirect_uri=settings.QQ_REDIRECT_URI,
                         state=next)
         #  创建QQ登录工具对象
         login_url = oauth.get_qq_url()
@@ -35,18 +41,39 @@ class QQAuthUserView(APIView):
     def get(self, request):
         # 获取前端传入的code
         code = request.query_params.get('code')
-        if not code: # 如果没有获取到code
+        if not code:  # 如果没有获取到code
             return Response({'message': '缺少code'}, status=status.HTTP_400_BAD_REQUEST)
 
         # 创建QQ登录工具对象
         oauth = OAuthQQ(client_id=settings.QQ_CLIENT_ID, client_secret=settings.QQ_CLIENT_SECRET,
-                        redirect_uri=settings.QQ_REDIRECT_URI,
-                        state=next)
-        # 调用它里面get_access_token(code) 用code向qq服务器获取access_token
-        access_token = oauth.get_access_token(code)
-        # 调用它里面的get_open_id(access_token)  用access_token响应QQ服务器获取openid
-        openid = oauth.get_open_id(access_token)
+                        redirect_uri=settings.QQ_REDIRECT_URI)
+        try:
+            # 调用它里面get_access_token(code) 用code向qq服务器获取access_token
+            access_token = oauth.get_access_token(code)
+            # 调用它里面的get_open_id(access_token)  用access_token响应QQ服务器获取openid
+            openid = oauth.get_open_id(access_token)
+        except Exception as e:
+            logger.info(e)
+            return Response({'message': 'QQ服务器不可用'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
         # 查询数据库有没有这个openid
-        # 如果没有这个openid 应该创建一个新用户和此openid绑定
-        # 如果数据库中有此openid 直接代码登录成功,给前端 返回JWT 状态保存信息
-        pass
+        try:
+            authQQUserModel = OAuthQQUser.objects.get(openid=openid)
+        except OAuthQQUser.DoesNotExist:
+            # 如果openid 没有绑定用户 应用创建用户并绑定openid
+            return Response({'access_token': openid})
+
+        else:
+            # 如果openid已绑定美多用多 那么直接代表登录成功,给前端 返回JWT 状态保存信息
+            user = authQQUserModel.user  # 获取到openid 关联的user
+            jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER  # 引用jwt中的叫jwt_payload_handler函数(生成payload)
+            jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER  # 函数引用 生成jwt
+
+            payload = jwt_payload_handler(user)  # 根据user生成用户相关的载荷
+            token = jwt_encode_handler(payload)  # 传入载荷生成完整的jwt
+
+            return Response({
+                'token': token,
+                'username': user.username,
+                'user_id': user.id
+            })
