@@ -7,9 +7,12 @@ from rest_framework import status
 from rest_framework_jwt.settings import api_settings
 
 from .models import OAuthQQUser
+from .utlis import generate_save_user_token
 import logging
 
 logger = logging.getLogger('django')
+
+
 # Create your views here.
 class QQOauthURLView(APIView):
     """拼接好QQ登录网址"""
@@ -39,32 +42,34 @@ class QQAuthUserView(APIView):
     """QQ登录成功后的回调处理"""
 
     def get(self, request):
-        # 获取前端传入的code
+        # 1.获取前端传入的code
         code = request.query_params.get('code')
         if not code:  # 如果没有获取到code
             return Response({'message': '缺少code'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 创建QQ登录工具对象
+        # 2.创建QQ登录工具对象
         oauth = OAuthQQ(client_id=settings.QQ_CLIENT_ID, client_secret=settings.QQ_CLIENT_SECRET,
                         redirect_uri=settings.QQ_REDIRECT_URI)
         try:
-            # 调用它里面get_access_token(code) 用code向qq服务器获取access_token
+            # 3.调用它里面get_access_token(code) 用code向qq服务器获取access_token
             access_token = oauth.get_access_token(code)
-            # 调用它里面的get_open_id(access_token)  用access_token响应QQ服务器获取openid
+            # 4. 调用它里面的get_open_id(access_token)  用access_token响应QQ服务器获取openid
             openid = oauth.get_open_id(access_token)
         except Exception as e:
             logger.info(e)
             return Response({'message': 'QQ服务器不可用'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
-        # 查询数据库有没有这个openid
+
         try:
+            # 5.查询数据库有没有这个openid
             authQQUserModel = OAuthQQUser.objects.get(openid=openid)
         except OAuthQQUser.DoesNotExist:
-            # 如果openid 没有绑定用户 应用创建用户并绑定openid
-            return Response({'access_token': openid})
+            # 6.如果openid 没有绑定用户,把openid 加密之后响应给前端 ,让前端先暂存一会 等待绑定时使用
+            access_token_openid = generate_save_user_token(openid)
+            return Response({'access_token': access_token_openid})
 
         else:
-            # 如果openid已绑定美多用多 那么直接代表登录成功,给前端 返回JWT 状态保存信息
+            # 7.如果openid已绑定美多用户 那么直接代表登录成功,给前端 返回JWT 状态保存信息
             user = authQQUserModel.user  # 获取到openid 关联的user
             jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER  # 引用jwt中的叫jwt_payload_handler函数(生成payload)
             jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER  # 函数引用 生成jwt
@@ -77,3 +82,26 @@ class QQAuthUserView(APIView):
                 'username': user.username,
                 'user_id': user.id
             })
+
+    def post(self, request):
+        """openid绑定用户接口"""
+        # 创建序列化器进行反序列化
+        serializer = QQAuthUserSerializer(data=request.data)
+        # 调用is_valid方法进行校验
+        serializer.is_valid(raise_execption=True)
+        # 调用序列化器的save方法
+        user = serializer.save()
+        # 生成JWT 状态保存 token
+        jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER  # 引用jwt中的叫jwt_payload_handler函数(生成payload)
+        jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER  # 函数引用 生成jwt
+
+        payload = jwt_payload_handler(user)  # 根据user生成用户相关的载荷
+        token = jwt_encode_handler(payload)  # 传入载荷生成完整的jwt
+        # 响应
+        return Response({
+            'token': token,
+            'username': user.username,
+            'user_id': user.id
+        })
+
+
