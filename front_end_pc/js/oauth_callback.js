@@ -18,7 +18,7 @@ var vm = new Vue({
         sms_code: '',
         access_token: ''
     },
-    mounted: function(){
+    mounted: function(){  // mounted 当对应的html代码加载完成后就会自动调用 mounted中的方法
         // 从路径中获取qq重定向返回的code
         var code = this.get_query_string('code');
         axios.get(this.host + '/oauth/qq/user/?code=' + code, {
