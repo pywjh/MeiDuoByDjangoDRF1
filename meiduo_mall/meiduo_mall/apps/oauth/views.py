@@ -8,6 +8,7 @@ from rest_framework_jwt.settings import api_settings
 
 from .models import OAuthQQUser
 from .utlis import generate_save_user_token
+from .serializers import QQAuthUserSerializer
 import logging
 
 logger = logging.getLogger('django')
@@ -88,7 +89,7 @@ class QQAuthUserView(APIView):
         # 创建序列化器进行反序列化
         serializer = QQAuthUserSerializer(data=request.data)
         # 调用is_valid方法进行校验
-        serializer.is_valid(raise_execption=True)
+        serializer.is_valid(raise_exception=True)
         # 调用序列化器的save方法
         user = serializer.save()
         # 生成JWT 状态保存 token
