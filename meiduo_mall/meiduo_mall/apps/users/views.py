@@ -1,10 +1,10 @@
 from django.shortcuts import render
-from rest_framework.generics import GenericAPIView, CreateAPIView, RetrieveAPIView
+from rest_framework.generics import GenericAPIView, CreateAPIView, RetrieveAPIView, UpdateAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from .serializers import CreateUserSerializer, UserDetailSerializer
+from .serializers import CreateUserSerializer, UserDetailSerializer, EmailSerializer
 from .models import User
 # Create your views here.
 
@@ -63,3 +63,14 @@ class UserDetailView(RetrieveAPIView):
 
 
 
+
+
+
+# PUT /email/
+class EmailView(UpdateAPIView):
+    """更新用户邮箱"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = EmailSerializer
+
+    def get_object(self):
+        return self.request.user
