@@ -4,9 +4,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+from rest_framework.viewsets import GenericViewSet
 
 from .serializers import CreateUserSerializer, UserDetailSerializer, EmailSerializer
-from .models import User
+from .models import User, Address
 # Create your views here.
 
 
@@ -95,3 +96,29 @@ class EmailVerifyView(APIView):
         user.save()
         # 响应
         return Response({'message': 'ok'})
+
+
+
+class AddressViewSet(GenericAPIView):
+    """用户收货地址增删改查"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = ''
+    # queryset = ''
+
+
+    def create(self, request):
+        user = request.user
+        # count = user.addresses.all().count()
+        count = Address.objects.filter(user=user).count()
+        # 用户收货地址数量有上限  最多只能有20
+        if count >= 20:
+            return Response({'message': '收货地址数量上限'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 创建序列化器进行反序列化
+        serializer = self.get_serializer(data=request.data)
+        # 调用序列化器的is_valid()
+        serializer.is_valid(raise_exception=True)
+        # 调用序列化器的save()
+        serializer.save()
+        # 响应
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
