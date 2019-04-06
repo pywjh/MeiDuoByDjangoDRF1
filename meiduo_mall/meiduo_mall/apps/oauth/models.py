@@ -1,6 +1,6 @@
 from django.db import models
 
-from meiduo_mall.utlis.models import BaseModel
+from meiduo_mall.utils.models import BaseModel
 from users.models import User
 
 
