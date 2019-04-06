@@ -1,1 +1,1 @@
-from django.conf.urls import urlfrom . import viewsurlpatterns = [    # 查询所有省    url(r'^areas/$', views.AreaListView.as_view()),    url(r'^areas/(?P<pk>\d+)/$', views.AreaDetailView.as_view()),]
+from django.conf.urls import urlfrom rest_framework.routers import DefaultRouterfrom . import viewsurlpatterns = [    # 查询所有省    # url(r'^areas/$', views.AreaListView.as_view()),    # url(r'^areas/(?P<pk>\d+)/$', views.AreaDetailView.as_view()),]router = DefaultRouter()router.register(r'areas', views.AreaViewSet, base_name='area')urlpatterns += router.urls
