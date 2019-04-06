@@ -5,6 +5,7 @@ from rest_framework import status
 from rest_framework.generics import GenericAPIView, ListAPIView, RetrieveAPIView
 from rest_framework.mixins import ListModelMixin
 from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework_extensions.cache.mixins import CacheResponseMixin
 
 from .models import Area
 from .serializers import AreaSerializer, SubsSerializer
@@ -83,10 +84,10 @@ from .serializers import AreaSerializer, SubsSerializer
     #     return Response(serializer.data)
 
 
-class AreaViewSet(ReadOnlyModelViewSet):
+class AreaViewSet(CacheResponseMixin, ReadOnlyModelViewSet):
 
+    # queryset = Area.objects.all()
     # 指定查询集
-
     def get_queryset(self):
         if self.action == 'list':
             return Area.objects.filter(parent=None)
