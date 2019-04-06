@@ -3,6 +3,7 @@ from rest_framework.generics import GenericAPIView, CreateAPIView, RetrieveAPIVi
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
 
 from .serializers import CreateUserSerializer, UserDetailSerializer, EmailSerializer
 from .models import User
@@ -74,3 +75,20 @@ class EmailView(UpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class EmailVerifyView(APIView):
+    """激活用户邮箱"""
+
+    def get(self, request):
+        # 获取前端查询字符串中传入的token
+        token = request.query_params.get('token')
+        # 把token解密 并查询对应的user
+        user = User.check_verify_email_token(token)
+        # 修改当前user的email_active为True
+        if user is None:
+            return Response({'message': '激活失败'}, status=status.HTTP_400_BAD_REQUEST)
+        user.email_active = True
+        user.save()
+        # 响应
+        return Response({'message': 'ok'})
