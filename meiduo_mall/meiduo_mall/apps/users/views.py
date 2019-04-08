@@ -6,8 +6,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework.viewsets import GenericViewSet
 
-from .serializers import CreateUserSerializer, UserDetailSerializer, EmailSerializer
+from .serializers import CreateUserSerializer, UserDetailSerializer, EmailSerializer, UserAddressSerializer
 from .models import User, Address
+
+
 # Create your views here.
 
 
@@ -60,14 +62,6 @@ class UserDetailView(RetrieveAPIView):
         return self.request.user
 
 
-
-
-
-
-
-
-
-
 # PUT /email/
 class EmailView(UpdateAPIView):
     """更新用户邮箱"""
@@ -98,13 +92,12 @@ class EmailVerifyView(APIView):
         return Response({'message': 'ok'})
 
 
-
-class AddressViewSet(GenericAPIView):
+class AddressViewSet(GenericViewSet):
     """用户收货地址增删改查"""
     permission_classes = [IsAuthenticated]
-    serializer_class = ''
-    # queryset = ''
+    serializer_class = UserAddressSerializer
 
+    # queryset = ''
 
     def create(self, request):
         user = request.user
