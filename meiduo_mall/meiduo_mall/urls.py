@@ -19,6 +19,8 @@ from django.contrib import admin
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
 
+    url(r'^ckeditor/', include('ckeditor_uploader.urls')),  # 富文本编辑器
+
     url(r'^', include('verifications.urls')),  # 发短信模块
 
     url(r'^', include('users.urls')),  # 用户模块
