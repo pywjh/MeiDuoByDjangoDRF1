@@ -8,7 +8,8 @@ from rest_framework import status
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.mixins import UpdateModelMixin
 
-from .serializers import CreateUserSerializer, UserDetailSerializer, EmailSerializer, UserAddressSerializer, AddressTitleSerializer
+from .serializers import CreateUserSerializer, UserDetailSerializer, EmailSerializer, UserAddressSerializer, \
+    AddressTitleSerializer
 from .models import User, Address
 
 
@@ -120,8 +121,6 @@ class AddressViewSet(UpdateModelMixin, GenericViewSet):
         serializer.save()
         # 响应
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
 
     # GET /addresses/
     def list(self, request, *args, **kwargs):
