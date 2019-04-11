@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from . import models
+from celery_tasks.html.tasks import generate_static_list_search_html
 
 
 class GoodsCategoryAdmin(admin.ModelAdmin):
@@ -13,15 +14,17 @@ class GoodsCategoryAdmin(admin.ModelAdmin):
         :param form: admin中表单
         :param change:  是否改为
         """
+
         obj.save()
         # 重新生成新的列表静态界面
-        import time
-        time.sleep(5)
+        generate_static_list_search_html.delay()
+
 
     def delete_model(self, request, obj):
         """当点击admin中删除按钮时会来调用此方法"""
         obj.delete()
-        pass
+        # 重新生成新的列表静态界面
+        generate_static_list_search_html.delay()
 
 
 # Register your models here.
