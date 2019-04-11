@@ -87,6 +87,8 @@ from .serializers import AreaSerializer, SubsSerializer
 class AreaViewSet(CacheResponseMixin, ReadOnlyModelViewSet):
 
     # queryset = Area.objects.all()
+
+    pagination_class = None  # 禁用分页
     # 指定查询集
     def get_queryset(self):
         if self.action == 'list':

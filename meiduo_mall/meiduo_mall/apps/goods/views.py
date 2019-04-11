@@ -3,11 +3,16 @@ from rest_framework.generics import ListAPIView
 
 from .models import SKU
 from .serializers import SKUSerializer
+from rest_framework.filters import OrderingFilter
 
 
 # Create your views here.
 class SKUListView(ListAPIView):
     """商品列表数据查询"""
+
+    filter_backends = [OrderingFilter]  # 指定过滤后端为排序过滤
+    ordering_fields = ['create_time', 'price', 'sales']
+
 
     serializer_class = SKUSerializer
     # queryset = SKU.objects.filter()
