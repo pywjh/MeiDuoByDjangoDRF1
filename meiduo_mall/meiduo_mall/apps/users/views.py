@@ -195,7 +195,7 @@ class UserBrowserHistoryView(CreateAPIView):
         sku_ids = redis_conn.lrange('history_%d' % user.id, 0, -1)
 
         # 把sku_id对应的sku模型查询 出来
-        # SKU.objects.filter(id__in=sku_ids)
+        # SKU.objects.filter(id__in=sku_ids)  # 用此方式获取sku模型顺序就乱了
         sku_list = []
         for sku_id in sku_ids:
             sku = SKU.objects.get(id=sku_id)
