@@ -3,8 +3,29 @@ from django.contrib import admin
 from . import models
 
 
+class GoodsCategoryAdmin(admin.ModelAdmin):
+    """商品类别模型站点管理类"""
+    def save_model(self, request, obj, form, change):
+        """
+        当点击admin中的保存按钮时会来调用此方法
+        :param request: 保存时本次请求对象
+        :param obj: 本次要保存的模型对象
+        :param form: admin中表单
+        :param change:  是否改为
+        """
+        obj.save()
+        # 重新生成新的列表静态界面
+        import time
+        time.sleep(5)
+
+    def delete_model(self, request, obj):
+        """当点击admin中删除按钮时会来调用此方法"""
+        obj.delete()
+        pass
+
+
 # Register your models here.
-admin.site.register(models.GoodsCategory)
+admin.site.register(models.GoodsCategory, GoodsCategoryAdmin)
 admin.site.register(models.GoodsChannel)
 admin.site.register(models.Goods)
 admin.site.register(models.Brand)
