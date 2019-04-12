@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django_redis import get_redis_connection
 
-from .serializers import CartSerializer, SKUCartSerializer
+from .serializers import CartSerializer, SKUCartSerializer, CartDeletedSerializer
 from goods.models import SKU
 
 
@@ -237,4 +237,47 @@ class CartView(APIView):
 
     def delete(self, request):
         """删除"""
+
+        # 创建序列化器
+        serializer = CartDeletedSerializer(data=request.data)
+        # 校验
+        serializer.is_valid(raise_exception=True)
+        # 获取校验后的数据 sku_id
+        sku_id = serializer.validated_data.get('sku_id')
+
+        try:
+            user = request.user
+        except:
+            user = None
+        # 创建响应对象
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        if user and user.is_authenticated:
+            """登录用户操作redis购物车数据"""
+        else:
+            """未登录用户操作cookie购物车数据"""
+            # 获取cookie
+            cart_str = request.COOKIES.get('cart')
+
+            # 判断是否获取到cookie:
+            if cart_str:
+                # 把cookie字符串数据转换成cookie的字典
+                cart_dict = pickle.loads(base64.b64decode(cart_str.encode()))
+            else:
+                # 如果没有获取到cookie, 直接提前响应
+                return Response({'message': 'cookie没有获取到'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # 把要删除的sku_id 从cookie大字典中移除键值对
+            if sku_id in cart_dict:  # 判断要删除的sku_id是否存在于字典中,存在再去删除
+                del cart_dict[sku_id]
+
+            if len(cart_dict.keys()):  # 如果cookie字典中还有商品
+                # 再把cookie字典转换成cookie 字符串
+                cart_str = base64.b64encode(pickle.dumps(cart_dict)).decode()
+                # 设置cookie
+                response.set_cookie('cart', cart_str)
+            else:
+                # cookie购物车数据已经清空了, 就直接将购物车cookie删除
+                response.delete_cookie('cart')
+
+        return response
         pass
