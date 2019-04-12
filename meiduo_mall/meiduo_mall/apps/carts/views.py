@@ -27,7 +27,6 @@ class CartView(APIView):
         count = serializer.validated_data.get('count')
         selected = serializer.validated_data.get('selected')
 
-
         try:
             user = request.user  # 执行次行代码时会执行认证逻辑,如果登录用户认证会成功没有异常,但是未登录用户认证会出异常我们自己拦截
         except:
@@ -108,26 +107,6 @@ class CartView(APIView):
 
         return response
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def get(self, request):
         """查询"""
 
@@ -138,16 +117,37 @@ class CartView(APIView):
 
         if user and user.is_authenticated:
             """登录用户获取redis购物车数据"""
+            # 创建redis连接对象
+            redis_conn = get_redis_connection('cart')
+            # 获取hash数据 {sku_id_1: 1, sku_id_16: 2}
+            cart_redis_dict = redis_conn.hgetall('cart_%d' % user.id)
+            # 获取set集合数据{sku_id_1}  SMEMBERS
+            selecteds = redis_conn.smembers('selected_%d' % user.id)
+            # 将redis购物车数据格式转换成和cookie购物车数据格式一致
+            cart_dict = {}
+            for sku_id_bytes, count_bytes in cart_redis_dict.items():  # 遍历hash中的所有键值对字典,
+                cart_dict[int(sku_id_bytes)] = {  # 包到字典中的数据注意类型转换
+                    'count': int(count_bytes),
+                    'selected': sku_id_bytes in selecteds
+                }
+
         else:
             """未登录用户获取cookie购物车数据"""
+            """
+            {
+                'sku_id_1': {'count': 1, 'selected': True},
+                'sku_id_16': {'count': 1, 'selected': True}
+            }
+            """
+
+    pass
 
 
-        pass
+def put(self, request):
+    """修改"""
+    pass
 
-    def put(self, request):
-        """修改"""
-        pass
 
-    def delete(self, request):
-        """删除"""
-        pass
+def delete(self, request):
+    """删除"""
+    pass
