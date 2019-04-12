@@ -184,8 +184,29 @@ class CartView(APIView):
         except:
             user = None
 
+        # 创建响应对象
+        response = Response(serializer.data)
         if user and user.is_authenticated:
             """登录用户修改redis购物车数据"""
+            # 创建redis连接对象
+            redis_conn = get_redis_connection('cart')
+            # 创建管道对象
+            pl = redis_conn.pipeline()
+
+            # 覆盖sku_id 对应的count
+            pl.hset('cart_%d' % user.id, sku_id, count)
+
+            # 如果勾选就把勾选商品的sku_id存储到set集合
+            if selected:
+                pl.sadd('selected_%d' % user.id, sku_id)
+            else:
+                # 如果未勾选把就商品的sku_id从set集合中移除
+                pl.srem('selected_%d' % user.id, sku_id)
+            # 执行管道
+            pl.execute()
+
+            # return Response(serializer.data)
+
         else:
             """未登录用户修改cookie购物车数据"""
             # 获取cookie
@@ -205,11 +226,11 @@ class CartView(APIView):
             }
             # 把cookie大字典再转换字符串
             cart_str = base64.b64encode(pickle.dumps(cart_dict)).decode()
-            # 创建响应对象
-            response = Response(serializer.data)
+            # # 创建响应对象
+            # response = Response(serializer.data)
             # 设置cookie
             response.set_cookie('cart', cart_str)
-            return response
+        return response
 
 
 
