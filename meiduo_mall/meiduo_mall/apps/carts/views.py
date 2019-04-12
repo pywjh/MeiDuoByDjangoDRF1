@@ -1,5 +1,8 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
+import pickle, base64
+from rest_framework.response import Response
+from rest_framework import status
 
 from .serializers import CartSerializer
 
@@ -34,7 +37,71 @@ class CartView(APIView):
 
         else:
             """未登录用户操作cookie购物车数据"""
+            """
+            {
+                'sku_id_1': {'count': 1, 'selected': True},
+                'sku_id_16': {'count': 1, 'selected': True}
+            }
+            """
+            # 获取cookie购物车数据
+            cart_str = request.COOKIES.get('cart')
+            if cart_str:  # 说明之前cookie购物车已经有商品
+                # 把字条串转换成bytes类型的字符串
+                cart_str_bytes = cart_str.encode()
+                # 把bytes类型的字符串转换成bytes类型
+                cart_bytes = base64.b64decode(cart_str_bytes)
+                # 把bytes类型转换成字典
+                cart_dict = pickle.loads(cart_bytes)
+            else:
+                # 如果cookie没还没有购物车数据说明是每一次来添加
+                cart_dict = {}
+
+            # 增量计数
+            if sku_id in cart_dict:
+                # 判断当前要添加的sku_id在字典中是否已存在
+                origin_count = cart_dict[sku_id]['count']
+                count += origin_count  # 原购买数据 和本次购买数据累加
+                # count = count + origin_count
+
+            # 把新的商品添加到cart_dict字典中
+            cart_dict[sku_id] = {
+                'count': count,
+                'selected': selected
+            }
+
+            # 先将字典转换成bytes类型
+            cart_bytes = pickle.dumps(cart_dict)
+            # 再将bytes类型转换成bytes类型的字符串
+            cart_str_bytes = base64.b64encode(cart_bytes)
+            # 把bytes类型的字符串转换成字符串
+            cart_str = cart_str_bytes.decode()
+
+            # 创建响应对象
+            response = Response(serializer.data, status=status.HTTP_201_CREATED)
+            # 设置cookie
+            response.set_cookie('cart', cart_str)
+
+            return response
+
+
         pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def get(self, request):
         """查询"""
