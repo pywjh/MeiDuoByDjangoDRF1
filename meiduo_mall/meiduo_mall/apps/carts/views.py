@@ -168,11 +168,52 @@ class CartView(APIView):
 
 
 
-def put(self, request):
-    """修改"""
-    pass
+    def put(self, request):
+        """修改"""
+        # 创建序列化器
+        serializer = CartSerializer(data=request.data)
+        # 校验
+        serializer.is_valid(raise_exception=True)
+        # 获取校验后的数据
+        sku_id = serializer.validated_data.get('sku_id')
+        count = serializer.validated_data.get('count')
+        selected = serializer.validated_data.get('selected')
+
+        try:
+            user = request.user
+        except:
+            user = None
+
+        if user and user.is_authenticated:
+            """登录用户修改redis购物车数据"""
+        else:
+            """未登录用户修改cookie购物车数据"""
+            # 获取cookie
+            cart_str = request.COOKIES.get('cart')
+            # 判断cookie有没有取到
+            if cart_str:
+                # 把cookie字符串转换成字典
+                cart_dict = pickle.loads(base64.b64decode(cart_str.encode()))
+            else:
+                # 如果cookie没有取出,提前响应,不执行后续代码
+                return Response({'message': '没有获取到cookie'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # 直接覆盖原cookie字典数据
+            cart_dict[sku_id] = {
+                'count': count,
+                'selected': selected
+            }
+            # 把cookie大字典再转换字符串
+            cart_str = base64.b64encode(pickle.dumps(cart_dict)).decode()
+            # 创建响应对象
+            response = Response(serializer.data)
+            # 设置cookie
+            response.set_cookie('cart', cart_str)
+            return response
 
 
-def delete(self, request):
-    """删除"""
-    pass
+
+
+    def delete(self, request):
+        """删除"""
+        pass
