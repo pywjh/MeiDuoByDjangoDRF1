@@ -32,6 +32,9 @@ class CartView(APIView):
             user = request.user  # 执行次行代码时会执行认证逻辑,如果登录用户认证会成功没有异常,但是未登录用户认证会出异常我们自己拦截
         except:
             user = None
+
+        # 创建响应对象
+        response = Response(serializer.data, status=status.HTTP_201_CREATED)
         # is_authenticated 判断是匿名用户还是 登录用户  (判断用户是否通过认证)
         if user and user.is_authenticated:
             """登录用户操作redis购物车数据"""
@@ -55,7 +58,7 @@ class CartView(APIView):
             # 执行管道
             pl.execute()
             # 响应
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            # return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         else:
             """未登录用户操作cookie购物车数据"""
@@ -98,12 +101,12 @@ class CartView(APIView):
             # 把bytes类型的字符串转换成字符串
             cart_str = cart_str_bytes.decode()
 
-            # 创建响应对象
-            response = Response(serializer.data, status=status.HTTP_201_CREATED)
+            # # 创建响应对象
+            # response = Response(serializer.data, status=status.HTTP_201_CREATED)
             # 设置cookie
             response.set_cookie('cart', cart_str)
 
-            return response
+        return response
 
 
 
