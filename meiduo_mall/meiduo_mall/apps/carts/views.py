@@ -12,7 +12,11 @@ class CartView(APIView):
 
     def post(self, request):
         """新增"""
-        print('xxxx')
+        try:
+            user = request.user  # 执行次行代码时会执行认证逻辑,如果登录用户认证会成功没有异常,但是未登录用户认证会出异常我们自己拦截
+        except:
+            user = None
+
         pass
 
     def get(self, request):
