@@ -5,7 +5,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from django_redis import get_redis_connection
 
-from .serializers import CartSerializer
+from .serializers import CartSerializer, SKUCartSerializer
+from goods.models import SKU
 
 
 # Create your views here.
@@ -123,6 +124,7 @@ class CartView(APIView):
             cart_redis_dict = redis_conn.hgetall('cart_%d' % user.id)
             # 获取set集合数据{sku_id_1}  SMEMBERS
             selecteds = redis_conn.smembers('selected_%d' % user.id)
+
             # 将redis购物车数据格式转换成和cookie购物车数据格式一致
             cart_dict = {}
             for sku_id_bytes, count_bytes in cart_redis_dict.items():  # 遍历hash中的所有键值对字典,
@@ -135,12 +137,13 @@ class CartView(APIView):
             """未登录用户获取cookie购物车数据"""
             """
             {
-                'sku_id_1': {'count': 1, 'selected': True},
-                'sku_id_16': {'count': 1, 'selected': True}
+                1: {'count': 1, 'selected': True},
+                16: {'count': 1, 'selected': True}
             }
             """
             cart_str = request.COOKIES.get('cart')
-            if cart_str:
+            if cart_str:  # 判断是否有cookie购物车数据
+                # 将cookie购物车字符串数据转换成字典类型
                 cart_str_bytes = cart_str.encode()
                 cart_bytes = base64.b64decode(cart_str_bytes)
                 cart_dict = pickle.loads(cart_bytes)
@@ -149,12 +152,20 @@ class CartView(APIView):
 
 
         # 根据sku_id 查询sku模型
+        sku_ids = cart_dict.keys()
+        # 直接查询出所有的sku模型返回查询集
+        skus = SKU.objects.filter(id__in=sku_ids)
+
         # 给每个sku模型多定义一个count和selected属性
+        for sku in skus:
+            sku.count = cart_dict[sku.id]['count']
+            sku.selected = cart_dict[sku.id]['selected']
         # 创建序列化器进行序列化
+        serializer = SKUCartSerializer(skus, many=True)
 
         # 响应
+        return Response(serializer.data)
 
-    pass
 
 
 def put(self, request):
