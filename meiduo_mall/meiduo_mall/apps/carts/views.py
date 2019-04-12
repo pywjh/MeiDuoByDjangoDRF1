@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 import pickle, base64
 from rest_framework.response import Response
 from rest_framework import status
+from django_redis import get_redis_connection
 
 from .serializers import CartSerializer
 
@@ -34,6 +35,27 @@ class CartView(APIView):
         # is_authenticated 判断是匿名用户还是 登录用户  (判断用户是否通过认证)
         if user and user.is_authenticated:
             """登录用户操作redis购物车数据"""
+            """
+            hash: {'sku_id_1': 2, 'sku_id_16':1}
+            set: {sku_id_1}
+            """
+            # 创建redis连接对象
+            redis_conn = get_redis_connection('cart')
+            pl = redis_conn.pipeline()  # 创建管道
+            # 添加 如果添加到sku_id在hash中已经存在,需要做增量
+            # redis_conn.hincrby('cart_%d % user.id, sku_id, count)
+            # redis_conn.hincrby('cart_%d % user.id, sku_id_5, 3)
+            # 如果要添加的sku_id在hash字典中不存在,就是新增,如果已存在,就会自动做增量计数再存储
+            pl.hincrby('cart_%d' % user.id, sku_id, count)
+
+            # 把勾选的商品sku_id 存储到set集合中
+            if selected:  # 判断当前商品是否勾选,勾选的再向set集合中添加
+                pl.sadd('selected_%d' % user.id, sku_id)
+
+            # 执行管道
+            pl.execute()
+            # 响应
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         else:
             """未登录用户操作cookie购物车数据"""
@@ -84,7 +106,7 @@ class CartView(APIView):
             return response
 
 
-        pass
+
 
 
 
