@@ -166,7 +166,6 @@ class CartView(APIView):
         # 响应
         return Response(serializer.data)
 
-
     def put(self, request):
         """修改"""
         # 创建序列化器
@@ -231,7 +230,6 @@ class CartView(APIView):
             response.set_cookie('cart', cart_str)
         return response
 
-
     def delete(self, request):
         """删除"""
 
@@ -290,3 +288,10 @@ class CartView(APIView):
 
         return response
 
+
+class CartSelectedAllView(APIView):
+    """购物车全选"""
+
+    def put(self, request):
+        """购物车全选"""
+        pass
