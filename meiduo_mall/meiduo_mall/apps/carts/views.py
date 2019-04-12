@@ -313,6 +313,21 @@ class CartSelectedAllView(APIView):
         response = Response(serializer.data)
         if user and user.is_authenticated:
             """登录用户操作redis数据"""
+            # 创建redis连接对象
+            redis_conn = get_redis_connection('cart')
+            # 获取hash字典中的所有数据
+            cart_redis_dict = redis_conn.hgetall('cart_%d' % user.id)
+            # 把hash字典中的所有key
+            sku_ids = cart_redis_dict.keys()
+            # 判断当前selected是True还是False
+            if selected:
+                # 如果是True 就把所有sku_id 添加到set集合中 *[1, 2, 3]
+                redis_conn.sadd('selected_%d' % user.id, *sku_ids)
+            else:
+                # 如果是False 就把所有sku_id 从set集合中删除
+                redis_conn.srem('selected_%d' % user.id, *sku_ids)
+
+
         else:
             """未登录用户操作cookie数据"""
             # 先获取cookie数据
