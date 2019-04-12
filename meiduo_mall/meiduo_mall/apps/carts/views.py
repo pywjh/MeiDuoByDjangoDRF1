@@ -167,7 +167,6 @@ class CartView(APIView):
         return Response(serializer.data)
 
 
-
     def put(self, request):
         """修改"""
         # 创建序列化器
@@ -233,8 +232,6 @@ class CartView(APIView):
         return response
 
 
-
-
     def delete(self, request):
         """删除"""
 
@@ -253,6 +250,18 @@ class CartView(APIView):
         response = Response(status=status.HTTP_204_NO_CONTENT)
         if user and user.is_authenticated:
             """登录用户操作redis购物车数据"""
+            # 创建redis连接对象
+            redis_conn = get_redis_connection('cart')
+            pl = redis_conn.pipeline()
+
+            # 删除hash数据
+            pl.hdel('cart_%d' % user.id, sku_id)
+            # 删除set数据
+            pl.srem('selected_%d' % user.id, sku_id)
+            # 执行管道
+            pl.execute()
+
+
         else:
             """未登录用户操作cookie购物车数据"""
             # 获取cookie
@@ -271,7 +280,7 @@ class CartView(APIView):
                 del cart_dict[sku_id]
 
             if len(cart_dict.keys()):  # 如果cookie字典中还有商品
-                # 再把cookie字典转换成cookie 字符串
+                # 再把cookie字典转换成cookie 字符串 {}
                 cart_str = base64.b64encode(pickle.dumps(cart_dict)).decode()
                 # 设置cookie
                 response.set_cookie('cart', cart_str)
@@ -280,4 +289,4 @@ class CartView(APIView):
                 response.delete_cookie('cart')
 
         return response
-        pass
+
