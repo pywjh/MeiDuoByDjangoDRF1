@@ -1,0 +1,1 @@
+def merge_cart_cookie_to_redis():    # 先获取cookie    # 判断是否有cookie购物车数据    # 如果cookie中没有购物车数据,直接返回    # 把cookie购物车的字符串 转换成字典    # 创建redis连接对象    # 遍历cookie购物车大字典,把sku_id及count向redis的hash中存储    # 删除cookie购物车数据    pass
