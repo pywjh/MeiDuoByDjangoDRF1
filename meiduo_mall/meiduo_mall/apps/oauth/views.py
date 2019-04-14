@@ -10,6 +10,7 @@ from .models import OAuthQQUser
 from .utils import generate_save_user_token
 from .serializers import QQAuthUserSerializer
 import logging
+from carts.utils import merge_cart_cookie_to_redis
 
 logger = logging.getLogger('django')
 
@@ -77,12 +78,18 @@ class QQAuthUserView(APIView):
 
             payload = jwt_payload_handler(user)  # 根据user生成用户相关的载荷
             token = jwt_encode_handler(payload)  # 传入载荷生成完整的jwt
-            # merge_xxx(request, user, response)
-            return Response({
+
+            # 创建响应对象
+            response = Response({
                 'token': token,
                 'username': user.username,
                 'user_id': user.id
             })
+            # 在此调用合并购物车函数
+            merge_cart_cookie_to_redis(request, user, response)
+
+
+            return response
 
     def post(self, request):
         """openid绑定用户接口"""
@@ -98,11 +105,16 @@ class QQAuthUserView(APIView):
 
         payload = jwt_payload_handler(user)  # 根据user生成用户相关的载荷
         token = jwt_encode_handler(payload)  # 传入载荷生成完整的jwt
-        # 响应
-        return Response({
+
+        response = Response({
             'token': token,
             'username': user.username,
             'user_id': user.id
         })
+        # 在此调用合并购物车函数
+        merge_cart_cookie_to_redis(request, user, response)
+
+        # 响应
+        return response
 
 
