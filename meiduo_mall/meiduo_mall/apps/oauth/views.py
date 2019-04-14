@@ -77,7 +77,7 @@ class QQAuthUserView(APIView):
 
             payload = jwt_payload_handler(user)  # 根据user生成用户相关的载荷
             token = jwt_encode_handler(payload)  # 传入载荷生成完整的jwt
-
+            # merge_xxx(request, user, response)
             return Response({
                 'token': token,
                 'username': user.username,
