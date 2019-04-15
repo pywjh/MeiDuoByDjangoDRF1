@@ -28,9 +28,9 @@ class PaymentView(APIView):
             return Response({'message': '订单有误'}, status=status.HTTP_400_BAD_REQUEST)
 
         # 支付宝
-        ALIPAY_APPID = '2016091900551154'
-        ALIPAY_DEBUG = True
-        ALIPAY_URL = 'https://openapi.alipaydev.com/gateway.do'
+        # ALIPAY_APPID = '2016091900551154'
+        # ALIPAY_DEBUG = True
+        # ALIPAY_URL = 'https://openapi.alipaydev.com/gateway.do'
         # 创建alipay  SDK中提供的支付对象
         alipay = AliPay(
             appid=settings.ALIPAY_APPID,
@@ -56,7 +56,27 @@ class PaymentView(APIView):
         # 沙箱环境支付链接 :  https://openapi.alipaydev.com/gateway.do? + order_string
         # 真实环境支付链接 :  https://openapi.alipay.com/gateway.do? + order_string
         alipay_url = settings.ALIPAY_URL + '?' + order_string
-
-
         # 响应
         return Response({'alipay_url': alipay_url})
+
+
+class PaymentStatusView(APIView):
+    """修改订单状态,保存支付宝交易号"""
+
+    def put(self, request):
+
+        # 获取前端以查询字符串方式传入的数据
+        queryDict = request.query_params
+        # 将queryDict类型转换成字典(要将中间的sign 从里面移除,然后进行验证)
+        # 将sign这个数据从字典中移除
+
+        # 创建alipay支付宝对象
+
+        # 调用alipay SDK中  的verify方法进行验证支付结果是否支付宝回传回来的
+
+        # 取出美多商城订单编号  再取出支付宝交易号
+        # 把两个编号绑定到一起存储mysql
+        # 修改支付成功后的订单状态
+
+        # 把支付宝交易响应回给前端
+        pass
