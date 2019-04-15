@@ -24,7 +24,8 @@ class PaymentView(APIView):
 
         # 校验订单的有效性
         try:
-            order_model = OrderInfo.objects.get(order_id=order_id, user=user, status=OrderInfo.ORDER_STATUS_ENUM['UNPAID'])
+            order_model = OrderInfo.objects.get(order_id=order_id, user=user,
+                                                status=OrderInfo.ORDER_STATUS_ENUM['UNPAID'])
         except OrderInfo.DoesNotExist:
             return Response({'message': '订单有误'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -36,10 +37,12 @@ class PaymentView(APIView):
         alipay = AliPay(
             appid=settings.ALIPAY_APPID,
             app_notify_url=None,  # 默认回调url
-            app_private_key_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'keys/app_private_key.pem'),  # 指定应用自己的私钥文件绝对路径
-            alipay_public_key_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'keys/alipay_public_key.pem'), # 指定支付宝公钥文件的绝对路径
+            app_private_key_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'keys/app_private_key.pem'),
+            # 指定应用自己的私钥文件绝对路径
+            alipay_public_key_path=os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                'keys/alipay_public_key.pem'),  # 指定支付宝公钥文件的绝对路径
             sign_type="RSA2",  # RSA 或者 RSA2  加密方式推荐使用RSA2
-            debug = settings.ALIPAY_DEBUG  # 默认False
+            debug=settings.ALIPAY_DEBUG  # 默认False
         )
 
         # 调用SDK的方法得到支付链接后面的查询参数
@@ -77,10 +80,12 @@ class PaymentStatusView(APIView):
         alipay = AliPay(
             appid=settings.ALIPAY_APPID,
             app_notify_url=None,  # 默认回调url
-            app_private_key_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'keys/app_private_key.pem'),  # 指定应用自己的私钥文件绝对路径
-            alipay_public_key_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'keys/alipay_public_key.pem'), # 指定支付宝公钥文件的绝对路径
+            app_private_key_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'keys/app_private_key.pem'),
+            # 指定应用自己的私钥文件绝对路径
+            alipay_public_key_path=os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                'keys/alipay_public_key.pem'),  # 指定支付宝公钥文件的绝对路径
             sign_type="RSA2",  # RSA 或者 RSA2  加密方式推荐使用RSA2
-            debug = settings.ALIPAY_DEBUG  # 默认False
+            debug=settings.ALIPAY_DEBUG  # 默认False
         )
 
         # 调用alipay SDK中  的verify方法进行验证支付结果是否支付宝回传回来的
@@ -95,7 +100,8 @@ class PaymentStatusView(APIView):
                 trade_id=trade_no
             )
             # 修改支付成功后的订单状态
-            OrderInfo.objects.filter(order_id=order_id, status=OrderInfo.ORDER_STATUS_ENUM['UNPAID']).update(status=OrderInfo.ORDER_STATUS_ENUM['UNSEND'])
+            OrderInfo.objects.filter(order_id=order_id, status=OrderInfo.ORDER_STATUS_ENUM['UNPAID']).update(
+                status=OrderInfo.ORDER_STATUS_ENUM['UNSEND'])
         else:
             return Response({'message': '非法请求'}, status=status.HTTP_403_FORBIDDEN)
 
