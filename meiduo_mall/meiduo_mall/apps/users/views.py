@@ -28,6 +28,9 @@ class UserView(CreateAPIView):
     serializer_class = CreateUserSerializer
 
 
+
+
+
 class UsernameCountView(APIView):
     """判断用户是否已注册"""
 
